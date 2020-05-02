@@ -125,6 +125,8 @@ struct hdd_apf_context {
 };
 #endif /* FEATURE_WLAN_APF */
 
+#define ACS_COMPLETE_TIMEOUT 3000
+
 /** Number of Tx Queues */
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 #define NUM_TX_QUEUES 5
@@ -534,9 +536,6 @@ struct hdd_tx_rx_stats {
 	__u32 rx_delivered[NUM_CPUS];
 	__u32 rx_refused[NUM_CPUS];
 	qdf_atomic_t rx_usolict_arp_n_mcast_drp;
-	/* rx gro */
-	__u32 rx_aggregated;
-	__u32 rx_non_aggregated;
 
 	/* txflow stats */
 	bool     is_txflow_paused;
@@ -670,6 +669,18 @@ struct hdd_icmpv4_stats_s {
 	uint16_t tx_ack_cnt;
 };
 
+/**
+ * struct hdd_peer_stats - Peer stats at HDD level
+ * @rx_count: RX count
+ * @rx_bytes: RX bytes
+ * @fcs_count: FCS err count
+ */
+struct hdd_peer_stats {
+	uint32_t rx_count;
+	uint64_t rx_bytes;
+	uint32_t fcs_count;
+};
+
 struct hdd_stats {
 	tCsrSummaryStatsInfo summary_stat;
 	tCsrGlobalClassAStatsInfo class_a_stat;
@@ -680,6 +691,7 @@ struct hdd_stats {
 	struct hdd_dns_stats_s hdd_dns_stats;
 	struct hdd_tcp_stats_s hdd_tcp_stats;
 	struct hdd_icmpv4_stats_s hdd_icmpv4_stats;
+	struct hdd_peer_stats peer_stats;
 #ifdef WLAN_FEATURE_11W
 	struct hdd_pmf_stats hdd_pmf_stats;
 #endif
@@ -1218,6 +1230,7 @@ struct hdd_context;
  * @vdev: object manager vdev context
  * @vdev_lock: lock to protect vdev context access
  * @event_flags: a bitmap of hdd_adapter_flags
+ * @acs_complete_event: acs complete event
  */
 struct hdd_adapter {
 	/* Magic cookie for adapter sanity verification.  Note that this
@@ -1281,6 +1294,7 @@ struct hdd_adapter {
 
 	/* QDF event for session close */
 	qdf_event_t qdf_session_close_event;
+	qdf_event_t acs_complete_event;
 
 	/* QDF event for session open */
 	qdf_event_t qdf_session_open_event;
@@ -1737,11 +1751,31 @@ struct hdd_dynamic_mac {
 };
 
 /**
+ * hdd_fw_ver_info - FW version info structure
+ * @major_spid: FW version - major spid.
+ * @minor_spid: FW version - minor spid
+ * @siid:       FW version - siid
+ * @sub_id:     FW version - sub id
+ * @rel_id:     FW version - release id
+ * @crmid:      FW version - crmid
+ */
+
+struct hdd_fw_ver_info {
+	uint32_t major_spid;
+	uint32_t minor_spid;
+	uint32_t siid;
+	uint32_t sub_id;
+	uint32_t rel_id;
+	uint32_t crmid;
+};
+
+/**
  * struct hdd_context - hdd shared driver and psoc/device context
  * @psoc: object manager psoc context
  * @pdev: object manager pdev context
  * @g_event_flags: a bitmap of hdd_driver_flags
  * @dynamic_nss_chains_support: Per vdev dynamic nss chains update capability
+ * @sar_cmd_params: SAR command params to be configured to the FW
  */
 struct hdd_context {
 	struct wlan_objmgr_psoc *psoc;
@@ -2025,6 +2059,8 @@ struct hdd_context {
 	unsigned long provisioned_intf_addr_mask;
 	unsigned long derived_intf_addr_mask;
 	struct wlan_mlme_chain_cfg fw_chain_cfg;
+	struct sar_limit_cmd_params *sar_cmd_params;
+	struct hdd_fw_ver_info fw_version_info;
 };
 
 /**
@@ -2529,12 +2565,9 @@ static inline bool hdd_scan_random_mac_addr_supported(void)
  */
 int hdd_start_vendor_acs(struct hdd_adapter *adapter);
 
-void hdd_get_fw_version(struct hdd_context *hdd_ctx,
-			uint32_t *major_spid, uint32_t *minor_spid,
-			uint32_t *siid, uint32_t *crmid);
 /**
  * hdd_acs_response_timeout_handler() - timeout handler for acs_timer
- * @context : timeout handler context
+ * @context: timeout handler context
  *
  * Return: None
  */
@@ -3344,7 +3377,7 @@ int hdd_set_limit_off_chan_for_tos(struct hdd_adapter *adapter, enum tos tos,
  *
  * Return: None
  */
-void hdd_drv_ops_inactivity_handler(void);
+void hdd_drv_ops_inactivity_handler(void *);
 
 /**
  * hdd_start_driver_ops_timer() - Starts driver ops inactivity timer

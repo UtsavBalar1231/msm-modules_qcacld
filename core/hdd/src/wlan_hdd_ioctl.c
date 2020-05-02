@@ -4128,6 +4128,9 @@ static int drv_cmd_set_roam_intra_band(struct hdd_adapter *adapter,
 
 	hdd_ctx->config->nRoamIntraBand = val;
 	sme_set_roam_intra_band(hdd_ctx->mac_handle, val);
+	policy_mgr_set_pcl_for_existing_combo(
+					hdd_ctx->psoc,
+					PM_STA_MODE);
 
 exit:
 	return ret;
@@ -7154,6 +7157,8 @@ static int drv_cmd_set_channel_switch(struct hdd_adapter *adapter,
 
 	hdd_debug("CH:%d BW:%d", chan_number, chan_bw);
 
+	wlan_hdd_set_sap_csa_reason(hdd_ctx->psoc, adapter->session_id,
+				    CSA_REASON_USER_INITIATED);
 	status = hdd_softap_set_channel_change(dev, chan_number, width, true);
 	if (status) {
 		hdd_err("Set channel change fail");
@@ -7391,6 +7396,12 @@ static int hdd_parse_disable_chan_cmd(struct hdd_adapter *adapter, uint8_t *ptr)
 mem_alloc_failed:
 
 	qdf_mutex_release(&hdd_ctx->cache_channel_lock);
+	/* Disable the channels received in command SET_DISABLE_CHANNEL_LIST */
+	if (!is_command_repeated && hdd_ctx->original_channels) {
+		wlan_hdd_disable_channels(hdd_ctx);
+		hdd_check_and_disconnect_sta_on_invalid_channel(hdd_ctx);
+	}
+
 	hdd_exit();
 
 	return ret;
@@ -7398,6 +7409,7 @@ mem_alloc_failed:
 parse_failed:
 	if (!is_command_repeated)
 		wlan_hdd_free_cache_channels(hdd_ctx);
+
 	qdf_mutex_release(&hdd_ctx->cache_channel_lock);
 	hdd_exit();
 

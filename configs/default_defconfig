@@ -42,6 +42,10 @@ ifeq ($(CONFIG_ICNSS), y)
 	endif
 endif
 
+# Disable BUILD_TAG
+WLAN_DISABLE_BUILD_TAG := y
+CONFIG_BUILD_TAG := n
+
 ifneq ($(DEVELOPER_DISABLE_BUILD_TIMESTAMP), y)
 ifneq ($(WLAN_DISABLE_BUILD_TAG), y)
 CONFIG_BUILD_TAG := y
@@ -91,7 +95,7 @@ CONFIG_QCACLD_FEATURE_GREEN_AP := y
 CONFIG_QCACLD_FEATURE_APF := y
 
 #Flag to enable SARv1 -> SARv2 conversion
-CONFIG_WLAN_FEATURE_SARV1_TO_SARV2 := n
+CONFIG_WLAN_FEATURE_SARV1_TO_SARV2 := y
 
 #Flag to enable set coex configuration
 ifeq ($(CONFIG_ARCH_QCS405), y)
@@ -338,13 +342,10 @@ BUILD_DEBUG_VERSION := y
 BUILD_DIAG_VERSION := y
 
 ifeq ($(CONFIG_SLUB_DEBUG), y)
-	PANIC_ON_BUG := y
 	WLAN_WARN_ON_ASSERT := y
 else ifeq ($(CONFIG_PERF_DEBUG), y)
-	PANIC_ON_BUG := y
 	WLAN_WARN_ON_ASSERT := y
 else
-	PANIC_ON_BUG := n
 	WLAN_WARN_ON_ASSERT := n
 endif
 
@@ -629,4 +630,14 @@ CONFIG_FEATURE_BECN_STATS := y
 #enable MPTA helper for QCS405
 ifeq ($(CONFIG_ARCH_QCS405), y)
 CONFIG_QCACLD_FEATURE_MPTA_HELPER := y
+endif
+
+#Flag to enable/disable kernel panic calls
+CONFIG_PANIC_ON_WLAN_QDF_BUG=y
+PANIC_ON_BUG := n
+
+ifeq ($(CONFIG_SLUB_DEBUG), y)
+	ifeq ($(CONFIG_PANIC_ON_WLAN_QDF_BUG), y)
+		PANIC_ON_BUG := y
+	endif
 endif

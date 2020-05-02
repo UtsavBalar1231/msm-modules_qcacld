@@ -7597,7 +7597,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_LL_TX_HBW_FLOW_MAX_Q_DEPTH_DEFAULT     (1500)
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
-#ifdef QCA_LL_TX_FLOW_CONTROL_V2
 
 /*
  * <ini>
@@ -7648,7 +7647,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_LL_TX_FLOW_START_QUEUE_OFFSET_MIN      (0)
 #define CFG_LL_TX_FLOW_START_QUEUE_OFFSET_MAX      (30)
 
-#endif /* QCA_LL_TX_FLOW_CONTROL_V2 */
 
 #define CFG_SAP_MAX_OFFLOAD_PEERS                  "gMaxOffloadPeers"
 #define CFG_SAP_MAX_OFFLOAD_PEERS_MIN              (2)
@@ -9100,6 +9098,30 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
+ * gTxAggSwRetry - Configure Tx aggregation sw retry
+ * @Min: 0
+ * @Max: 64
+ * @Default: 0
+ *
+ * gTxAggSwRetry gives an option to configure Tx aggregation sw
+ * retry. This can be useful in debugging throughput issues.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+
+#define CFG_TX_AGGR_SW_RETRY      "gTxAggSwRetry"
+#define CFG_TX_AGGR_SW_RETRY_MIN      (0)
+#define CFG_TX_AGGR_SW_RETRY_MAX      (64)
+#define CFG_TX_AGGR_SW_RETRY_DEFAULT  (0)
+
+/*
+ * <ini>
  * gTxNonAggSwRetryBE - Configure Tx non aggregation sw retry for BE
  * @Min: 0
  * @Max: 64
@@ -9193,6 +9215,30 @@ enum hdd_link_speed_rpt_type {
 #define CFG_TX_NON_AGGR_SW_RETRY_VO_MIN      (0)
 #define CFG_TX_NON_AGGR_SW_RETRY_VO_MAX      (64)
 #define CFG_TX_NON_AGGR_SW_RETRY_VO_DEFAULT  (0)
+
+/*
+ * <ini>
+ * gTxNonAggSwRetry - Configure Tx non aggregation sw retry
+ * @Min: 0
+ * @Max: 64
+ * @Default: 0
+ *
+ * gTxNonAggSwRetry gives an option to configure Tx non aggregation sw
+ * retry. This can be useful in debugging throughput issues.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+
+#define CFG_TX_NON_AGGR_SW_RETRY      "gTxNonAggSwRetry"
+#define CFG_TX_NON_AGGR_SW_RETRY_MIN      (0)
+#define CFG_TX_NON_AGGR_SW_RETRY_MAX      (64)
+#define CFG_TX_NON_AGGR_SW_RETRY_DEFAULT  (0)
 
 /*
  * fine timing measurement capability information
@@ -10973,8 +11019,8 @@ enum dot11p_mode {
 /*
  * <ini>
  * 5g_rssi_boost_threshold - A_band_boost_threshold above which 5 GHz is favored.
- * @Min: -55
- * @Max: -70
+ * @Min: -70
+ * @Max: -55
  * @Default: -60
  * This ini is used to set threshold for 5GHz band preference.
  *
@@ -10988,8 +11034,8 @@ enum dot11p_mode {
  * </ini>
  */
 #define CFG_5G_RSSI_BOOST_THRESHOLD_NAME         "5g_rssi_boost_threshold"
-#define CFG_5G_RSSI_BOOST_THRESHOLD_MIN          (-55)
-#define CFG_5G_RSSI_BOOST_THRESHOLD_MAX          (-70)
+#define CFG_5G_RSSI_BOOST_THRESHOLD_MIN          (-70)
+#define CFG_5G_RSSI_BOOST_THRESHOLD_MAX          (-55)
 #define CFG_5G_RSSI_BOOST_THRESHOLD_DEFAULT      (-60)
 
 /*
@@ -11040,8 +11086,8 @@ enum dot11p_mode {
  * <ini>
  * 5g_rssi_penalize_threshold - A_band_penalize_threshold above which
  * 5 GHz is not favored.
- * @Min: -65
- * @Max: -80
+ * @Min: -80
+ * @Max: -65
  * @Default: -70
  * This ini is used to set threshold for 5GHz band preference.
  *
@@ -11055,8 +11101,8 @@ enum dot11p_mode {
  * </ini>
  */
 #define CFG_5G_RSSI_PENALIZE_THRESHOLD_NAME      "5g_rssi_penalize_threshold"
-#define CFG_5G_RSSI_PENALIZE_THRESHOLD_MIN       (-65)
-#define CFG_5G_RSSI_PENALIZE_THRESHOLD_MAX       (-80)
+#define CFG_5G_RSSI_PENALIZE_THRESHOLD_MIN       (-80)
+#define CFG_5G_RSSI_PENALIZE_THRESHOLD_MAX       (-65)
 #define CFG_5G_RSSI_PENALIZE_THRESHOLD_DEFAULT   (-70)
 
 /*
@@ -16505,10 +16551,8 @@ struct hdd_config {
 	uint32_t TxHbwFlowHighWaterMarkOffset;
 	uint32_t TxHbwFlowMaxQueueDepth;
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
-#ifdef QCA_LL_TX_FLOW_CONTROL_V2
 	uint32_t TxFlowStopQueueThreshold;
 	uint32_t TxFlowStartQueueOffset;
-#endif
 	uint8_t apMaxOffloadPeers;
 	uint8_t apMaxOffloadReorderBuffs;
 	bool advertiseConcurrentOperation;
@@ -16779,10 +16823,12 @@ struct hdd_config {
 	uint32_t tx_aggr_sw_retry_threshold_bk;
 	uint32_t tx_aggr_sw_retry_threshold_vi;
 	uint32_t tx_aggr_sw_retry_threshold_vo;
+	uint32_t tx_aggr_sw_retry_threshold;
 	uint32_t tx_non_aggr_sw_retry_threshold_be;
 	uint32_t tx_non_aggr_sw_retry_threshold_bk;
 	uint32_t tx_non_aggr_sw_retry_threshold_vi;
 	uint32_t tx_non_aggr_sw_retry_threshold_vo;
+	uint32_t tx_non_aggr_sw_retry_threshold;
 	bool sta_prefer_80MHz_over_160MHz;
 	uint8_t sap_max_inactivity_override;
 	bool fw_timeout_crash;
